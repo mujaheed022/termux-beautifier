@@ -29,33 +29,30 @@ banner() {
 # Install dependencies
 install_dependencies() {
     echo -e "${YELLOW}[*] Installing dependencies...${NC}"
-    pkg update -y && pkg upgrade -y
+    pkg update -y
     pkg install -y git curl zsh neofetch figlet lolcat
 }
 
-# Install Oh-My-Zsh and create ~/.zshrc
+# Install Oh-My-Zsh
 install_ohmyzsh() {
     echo -e "${BLUE}[*] Installing Oh-My-Zsh...${NC}"
-    if [ ! -d "$HOME/.oh-my-zsh" ]; then
-        sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
-    fi
+    sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
+}
 
-    # Ensure .zshrc exists
-    if [ ! -f "$HOME/.zshrc" ]; then
-        cp "$HOME/.oh-my-zsh/templates/zshrc.zsh-template" "$HOME/.zshrc"
-    fi
-    
-    chsh -s zsh  # Set Zsh as default shell
-    echo -e "${GREEN}[+] Oh-My-Zsh installed successfully! Restart Termux to apply.${NC}"
+# Install Powerlevel10k
+install_powerlevel10k() {
+    echo -e "${YELLOW}[*] Installing Powerlevel10k theme...${NC}"
+    git clone --depth=1 https://github.com/romkatv/powerlevel10k.git ~/.oh-my-zsh/custom/themes/powerlevel10k
+}
+
+# Install Dracula theme
+install_dracula() {
+    echo -e "${YELLOW}[*] Installing Dracula theme...${NC}"
+    git clone https://github.com/dracula/zsh.git ~/.oh-my-zsh/custom/themes/dracula
 }
 
 # Apply themes
 apply_theme() {
-    if [ ! -f "$HOME/.zshrc" ]; then
-        echo -e "${RED}[!] .zshrc file not found! Installing Oh-My-Zsh first...${NC}"
-        install_ohmyzsh
-    fi
-
     echo -e "${GREEN}[*] Available Themes:${NC}"
     echo "1. Robbyrussell (Default)"
     echo "2. Agnoster"
@@ -67,13 +64,26 @@ apply_theme() {
     case $theme_choice in
         1) theme="robbyrussell" ;;
         2) theme="agnoster" ;;
-        3) theme="dracula" ;;
-        4) theme="powerlevel10k" ;;
-        *) echo -e "${RED}[!] Invalid choice! Using default theme.${NC}"; theme="robbyrussell" ;;
+        3) 
+            theme="dracula"
+            if [ ! -d "$HOME/.oh-my-zsh/custom/themes/dracula" ]; then
+                install_dracula
+            fi
+        ;;
+        4) 
+            theme="powerlevel10k/powerlevel10k"
+            if [ ! -d "$HOME/.oh-my-zsh/custom/themes/powerlevel10k" ]; then
+                install_powerlevel10k
+            fi
+        ;;
+        *) 
+            echo -e "${RED}[!] Invalid choice! Using default theme.${NC}"
+            theme="robbyrussell" 
+        ;;
     esac
 
-    sed -i "s/^ZSH_THEME=.*/ZSH_THEME=\"$theme\"/" "$HOME/.zshrc"
-    echo -e "${GREEN}[+] Theme applied successfully! Restart Termux to apply.${NC}"
+    sed -i "s/ZSH_THEME=.*/ZSH_THEME=\"$theme\"/" ~/.zshrc
+    echo -e "${GREEN}[+] Theme applied successfully! Restart Termux or run 'source ~/.zshrc' to see changes.${NC}"
 }
 
 # Customize prompt
@@ -81,8 +91,8 @@ customize_prompt() {
     echo -e "${BLUE}[*] Customizing your prompt...${NC}"
     echo -e "${GREEN}[*] Enter your custom prompt (e.g., '➜ '): ${NC}"
     read custom_prompt
-    echo "export PROMPT='$custom_prompt'" >> "$HOME/.zshrc"
-    echo -e "${GREEN}[+] Prompt customized successfully! Restart Termux to apply.${NC}"
+    echo "export PROMPT='$custom_prompt'" >> ~/.zshrc
+    echo -e "${GREEN}[+] Prompt customized successfully!${NC}"
 }
 
 # Apply fonts
